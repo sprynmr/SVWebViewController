@@ -7,6 +7,25 @@
 
 #import "SVWebViewController.h"
 
+@implementation UIViewController (SVWebViewControllerAdditions)
+
+- (void) presentWebViewControllerWithURL:(NSString *)url {
+	SVWebViewController *browser = [[SVWebViewController alloc] initWithAddress:url];
+	
+	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+		browser.modalPresentationStyle = UIModalPresentationPageSheet;
+	}
+	else {
+		browser.modalPresentationStyle = UIModalPresentationCurrentContext;
+	}
+	
+	[self presentModalViewController:browser animated:YES];
+	[browser release];
+}
+
+@end
+
+
 @interface SVWebViewController (private)
 
 - (CGFloat)leftButtonWidth;
@@ -239,6 +258,20 @@
 	self.webView = nil;
 }
 
+#pragma mark -
+#pragma mark Property Accessors
+
+- (NSString *) address {
+	return self.urlString;
+}
+
+- (void) setAddress:(NSString *)url {
+	self.urlString = url;
+	if (url && [url length] && [self isViewLoaded] && rWebView) {
+		NSURL *searchURL = [NSURL URLWithString:self.urlString];
+		[self.webView loadRequest:[NSURLRequest requestWithURL:searchURL]];
+	}
+}
 
 #pragma mark -
 #pragma mark Layout Methods
@@ -284,25 +317,15 @@
 		forwardBarButton.enabled = NO;
 	else
 		forwardBarButton.enabled = YES;
-	
-	UIBarButtonItem *sSeparator = [[UIBarButtonItem alloc] initWithCustomView:nil];
-	sSeparator.enabled = NO;
 		
 	if(self.webView.loading && !stoppedLoading) {
 		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemStop target:self action:@selector(stopLoading)];
-		sSeparator.width = separatorWidth+4;
 	}
 	
 	else {
 		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self.webView action:@selector(reload)];
-		sSeparator.width = separatorWidth+3;
 	}
 	
-	
-	UIBarButtonItem *rSeparator = [[UIBarButtonItem alloc] initWithCustomView:nil];
-	rSeparator.width = separatorWidth;
-	rSeparator.enabled = NO;
-    
     UIBarButtonItem *flexSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     
     UIBarButtonItem *fixedSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFixedSpace target:nil action:nil];
@@ -321,8 +344,6 @@
 	[refreshStopBarButton release];
     [flexSpace release];
     [fixedSpace release];
-	[sSeparator release];
-	[rSeparator release];
 }
 
 

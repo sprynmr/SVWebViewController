@@ -7,7 +7,12 @@
 
 #import <MessageUI/MessageUI.h>
 
+@interface UIViewController (SVWebViewControllerAdditions)
 
+- (void) presentWebViewControllerWithURL:(NSString *)url;
+
+@end
+	
 @interface SVWebViewController : UIViewController <UIWebViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate> {
 	UIWebView *rWebView;
 	
@@ -29,6 +34,7 @@
 
 @property (nonatomic, retain) UIWebView *webView;
 @property (nonatomic, retain) NSString *urlString;
+@property (nonatomic, assign) NSString *address;
 
 - (id)initWithAddress:(NSString*)string;
 
