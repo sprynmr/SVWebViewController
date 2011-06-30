@@ -7,32 +7,11 @@
 
 #import "SVWebViewController.h"
 
-@implementation UIViewController (SVWebViewControllerAdditions)
-
-- (void) presentWebViewControllerWithURL:(NSString *)url {
-	SVWebViewController *browser = [[SVWebViewController alloc] initWithAddress:url];
-	
-	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-		browser.modalPresentationStyle = UIModalPresentationPageSheet;
-	}
-	else {
-		browser.modalPresentationStyle = UIModalPresentationCurrentContext;
-	}
-	
-	[self presentModalViewController:browser animated:YES];
-	[browser release];
-}
-
-@end
-
-
 @interface SVWebViewController (private)
 
-- (CGFloat)leftButtonWidth;
 - (void)layoutSubviews;
 - (void)setupToolbar;
 - (void)setupTabletToolbar;
-
 - (void)stopLoading;
 
 @end
@@ -71,30 +50,25 @@
 	CGRect deviceBounds = [[UIApplication sharedApplication] keyWindow].bounds;
 	
 	if(!deviceIsTablet) {
-		separatorWidth = 50;
-		buttonWidth = 18;
-		
+
 		backBarButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"SVWebViewController.bundle/iPhone/back"] style:UIBarButtonItemStylePlain target:self.webView action:@selector(goBack)];
-		backBarButton.width = buttonWidth;
+        backBarButton.imageInsets = UIEdgeInsetsMake(2, 0, -2, 0);
+		backBarButton.width = 18;
 		
 		forwardBarButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"SVWebViewController.bundle/iPhone/forward"] style:UIBarButtonItemStylePlain target:self.webView action:@selector(goForward)];
-		forwardBarButton.width = buttonWidth;
+        forwardBarButton.imageInsets = UIEdgeInsetsMake(2, 0, -2, 0);
+		forwardBarButton.width = 18;
 		
 		actionBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAction target:self action:@selector(showActions)];
-		
+        
 		if(self.navigationController == nil) {
 			
             navBar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0,0,CGRectGetWidth(deviceBounds),44)];
-            navBar.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleBottomMargin;
+            navBar.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleBottomMargin;
 			[self.view addSubview:navBar];
 			[navBar release];
-			
-			UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(dismissController)];
             
 			navItem = [[UINavigationItem alloc] initWithTitle:self.title];
-			navItem.leftBarButtonItem = doneButton;
-			[doneButton release];
-			
 			[navBar setItems:[NSArray arrayWithObject:navItem] animated:YES];
 			[navItem release];
             
@@ -258,20 +232,6 @@
 	self.webView = nil;
 }
 
-#pragma mark -
-#pragma mark Property Accessors
-
-- (NSString *) address {
-	return self.urlString;
-}
-
-- (void) setAddress:(NSString *)url {
-	self.urlString = url;
-	if (url && [url length] && [self isViewLoaded] && rWebView) {
-		NSURL *searchURL = [NSURL URLWithString:self.urlString];
-		[self.webView loadRequest:[NSURLRequest requestWithURL:searchURL]];
-	}
-}
 
 #pragma mark -
 #pragma mark Layout Methods
@@ -279,10 +239,13 @@
 - (void)layoutSubviews {
 	CGRect deviceBounds = self.view.bounds;
 
-    if(UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !deviceIsTablet && !self.navigationController)
+    if(UIInterfaceOrientationIsLandscape(self.interfaceOrientation) && !deviceIsTablet && !self.navigationController) {
         navBar.frame = CGRectMake(0, 0, CGRectGetWidth(deviceBounds), 32);
-    else if(UIInterfaceOrientationIsPortrait(self.interfaceOrientation) && !deviceIsTablet && !self.navigationController)
+        toolbar.frame = CGRectMake(0, CGRectGetHeight(deviceBounds)-32, CGRectGetWidth(deviceBounds), 32);
+    } else if(UIInterfaceOrientationIsPortrait(self.interfaceOrientation) && !deviceIsTablet && !self.navigationController) {
         navBar.frame = CGRectMake(0, 0, CGRectGetWidth(deviceBounds), 44);
+        toolbar.frame = CGRectMake(0, CGRectGetHeight(deviceBounds)-44, CGRectGetWidth(deviceBounds), 44);
+    }
     
 	if(self.navigationController && deviceIsTablet)
 		self.webView.frame = CGRectMake(0, 0, CGRectGetWidth(deviceBounds), CGRectGetHeight(deviceBounds));
@@ -303,6 +266,12 @@
 
 - (void)setupToolbar {
 	
+    if(!navItem.leftBarButtonItem) {
+        UIBarButtonItem *doneButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone target:self action:@selector(dismissController)];
+        [navItem setLeftBarButtonItem:doneButton animated:YES];
+        [doneButton release];
+    }
+    
 	if(self.navigationController != nil)
 		self.navigationItem.title = [self.webView stringByEvaluatingJavaScriptFromString:@"document.title"];
 	else
@@ -317,14 +286,12 @@
 		forwardBarButton.enabled = NO;
 	else
 		forwardBarButton.enabled = YES;
-		
-	if(self.webView.loading && !stoppedLoading) {
-		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemStop target:self action:@selector(stopLoading)];
-	}
 	
-	else {
+	if(self.webView.loading && !stoppedLoading)
+		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemStop target:self action:@selector(stopLoading)];
+	
+	else
 		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self.webView action:@selector(reload)];
-	}
 	
     UIBarButtonItem *flexSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     
@@ -340,7 +307,8 @@
     
 	NSArray *newButtons = [NSArray arrayWithObjects:fixedSpace, backBarButton, flexSpace, forwardBarButton, flexSpace, refreshStopBarButton, flexSpace, actionBarButton, fixedSpace, nil];
 	[toolbar setItems:newButtons];
-	
+    [toolbar sizeToFit];
+    	
 	[refreshStopBarButton release];
     [flexSpace release];
     [fixedSpace release];
