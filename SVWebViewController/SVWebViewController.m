@@ -20,6 +20,7 @@
 
 @synthesize webView = rWebView;
 @synthesize urlString;
+@synthesize masterPopover;
 
 - (void)dealloc {
 	navItem = nil;
@@ -27,7 +28,8 @@
 	[backBarButton release];
 	[forwardBarButton release];
 	[actionBarButton release];
-	
+	self.masterPopover = nil;
+
     [super dealloc];
 }
 
@@ -43,12 +45,30 @@
 	return self;
 }
 
+- (NSString *)address {
+	return self.urlString;
+}
+
+- (void)setAddress:(NSString *)url {
+	self.urlString = url;
+	
+	if (masterPopover) {
+        [masterPopover dismissPopoverAnimated:YES];
+    }
+	
+	if ([self isViewLoaded] && rWebView && url && [url length]) {
+        NSURL *searchURL = [NSURL URLWithString:url];
+        [self.webView loadRequest:[NSURLRequest requestWithURL:searchURL]];
+	}
+}
+
 - (void)viewDidLoad {
     
 	[super viewDidLoad];
 	
 	CGRect deviceBounds = [[UIApplication sharedApplication] keyWindow].bounds;
-	
+	UIColor *blueGreen = [UIColor colorWithRed:0.301f green:0.353f blue:0.384f alpha:1.0];
+
 	if(!deviceIsTablet) {
 
 		backBarButton = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"SVWebViewController.bundle/iPhone/back"] style:UIBarButtonItemStylePlain target:self.webView action:@selector(goBack)];
@@ -82,6 +102,10 @@
             navBar = self.navigationController.navigationBar;
             toolbar = self.navigationController.toolbar;
         }
+		
+		toolbar.tintColor = blueGreen;
+		navBar.tintColor = blueGreen;
+
 	}
 	
 	else {
@@ -111,11 +135,14 @@
             
 			navBar = self.navigationController.navigationBar;
 			navBar.autoresizesSubviews = YES;
-			
+			navBar.tintColor = blueGreen;
+
 			NSArray* viewCtrlers = self.navigationController.viewControllers;
 			UIViewController* prevCtrler = [viewCtrlers objectAtIndex:[viewCtrlers count]-2];
 			titleLeftOffset = [prevCtrler.navigationItem.backBarButtonItem.title sizeWithFont:[UIFont boldSystemFontOfSize:12]].width+26;
 		}
+		
+		toolbar.tintColor = blueGreen;
 		
 		backButton = [UIButton buttonWithType:UIButtonTypeCustom];
 		[backButton setBackgroundImage:[UIImage imageNamed:@"SVWebViewController.bundle/iPad/back"] forState:UIControlStateNormal];
@@ -480,5 +507,26 @@
 	[controller dismissModalViewControllerAnimated:YES];
 }
 
+#pragma mark -
+#pragma mark Popover Support
 
+- (void)splitViewController: (UISplitViewController*)svc willHideViewController:(UIViewController *)aViewController withBarButtonItem:(UIBarButtonItem*)barButtonItem forPopoverController: (UIPopoverController*)pc {
+    barButtonItem.title = NSLocalizedString(@"Resources", @"Short title for popover");
+    [self.navigationItem setRightBarButtonItem:barButtonItem animated:YES];
+    self.masterPopover = pc;
+}
+
+
+// Called when the view is shown again in the split view, invalidating the button and popover controller.
+- (void)splitViewController: (UISplitViewController*)svc willShowViewController:(UIViewController *)aViewController invalidatingBarButtonItem:(UIBarButtonItem *)barButtonItem {
+    if (self.navigationItem) {
+        [self.navigationItem setRightBarButtonItem:nil animated:YES];
+	}
+    self.masterPopover = nil;
+}
+
+- (void) splitViewController:(UISplitViewController *)svc popoverController: (UIPopoverController *)pc
+   willPresentViewController: (UIViewController *)aViewController
+{
+}   
 @end
