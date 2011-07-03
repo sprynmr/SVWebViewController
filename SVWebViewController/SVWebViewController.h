@@ -7,12 +7,6 @@
 
 #import <MessageUI/MessageUI.h>
 
-@interface UIViewController (SVWebViewControllerAdditions)
-
-- (void) presentWebViewControllerWithURL:(NSString *)url;
-
-@end
-	
 @interface SVWebViewController : UIViewController <UISplitViewControllerDelegate, UIWebViewDelegate, UIActionSheetDelegate, MFMailComposeViewControllerDelegate> {
 	UIWebView *rWebView;
     UINavigationBar *navBar;
