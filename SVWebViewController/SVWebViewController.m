@@ -135,11 +135,13 @@
             
 			navBar = self.navigationController.navigationBar;
 			navBar.autoresizesSubviews = YES;
-			navBar.tintColor = blueGreen;
+//			navBar.tintColor = blueGreen;
 
 			NSArray* viewCtrlers = self.navigationController.viewControllers;
-			UIViewController* prevCtrler = [viewCtrlers objectAtIndex:[viewCtrlers count]-2];
-			titleLeftOffset = [prevCtrler.navigationItem.backBarButtonItem.title sizeWithFont:[UIFont boldSystemFontOfSize:12]].width+26;
+            if ([viewCtrlers count] > 1) {
+                UIViewController* prevCtrler = [viewCtrlers objectAtIndex:[viewCtrlers count]-2];
+                titleLeftOffset = [prevCtrler.navigationItem.backBarButtonItem.title sizeWithFont:[UIFont boldSystemFontOfSize:12]].width+26;
+            }
 		}
 		
 		toolbar.tintColor = blueGreen;
