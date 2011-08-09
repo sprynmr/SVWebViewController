@@ -13,7 +13,7 @@
 - (void)setupToolbar;
 - (void)setupTabletToolbar;
 - (void)stopLoading;
-
+- (void)reload;
 @end
 
 @implementation SVWebViewController
@@ -142,6 +142,8 @@
                 UIViewController* prevCtrler = [viewCtrlers objectAtIndex:[viewCtrlers count]-2];
                 titleLeftOffset = [prevCtrler.navigationItem.backBarButtonItem.title sizeWithFont:[UIFont boldSystemFontOfSize:12]].width+26;
             }
+            // always leave space for the left button item for now
+            titleLeftOffset = 65;
 		}
 		
 		toolbar.tintColor = blueGreen;
@@ -320,7 +322,7 @@
 		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemStop target:self action:@selector(stopLoading)];
 	
 	else
-		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self.webView action:@selector(reload)];
+		refreshStopBarButton = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh target:self action:@selector(reload)];
 	
     UIBarButtonItem *flexSpace = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil];
     
@@ -359,14 +361,14 @@
 		forwardButton.enabled = YES;
 	
 	if(self.webView.loading && !stoppedLoading) {
-		[refreshStopButton removeTarget:self.webView action:@selector(reload) forControlEvents:UIControlEventTouchUpInside];
+		[refreshStopButton removeTarget:self action:@selector(reload) forControlEvents:UIControlEventTouchUpInside];
 		[refreshStopButton addTarget:self action:@selector(stopLoading) forControlEvents:UIControlEventTouchUpInside];
 		[refreshStopButton setBackgroundImage:[UIImage imageNamed:@"SVWebViewController.bundle/iPad/stop"] forState:UIControlStateNormal];
 	}
 	
 	else {
 		[refreshStopButton removeTarget:self action:@selector(stopLoading) forControlEvents:UIControlEventTouchUpInside];
-		[refreshStopButton addTarget:self.webView action:@selector(reload) forControlEvents:UIControlEventTouchUpInside];
+		[refreshStopButton addTarget:self action:@selector(reload) forControlEvents:UIControlEventTouchUpInside];
 		[refreshStopButton setBackgroundImage:[UIImage imageNamed:@"SVWebViewController.bundle/iPad/refresh"] forState:UIControlStateNormal];
 	}
 }
@@ -443,6 +445,10 @@
 		[self setupToolbar];
 	else
 		[self setupTabletToolbar];
+}
+
+- (void)reload {
+	[self.webView reload];
 }
 
 - (void)showActions {
